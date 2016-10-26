@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		body {
+			text-align: center;
+			margin:auto;
+			margin-top: 20%;
+		}
+		.submit {
+			padding: 5px 10px;
+			background-color: #C0C0C0;
+			border-radius: 5px;
+			border:none;
+			font-size: 1em;
+		}
+		th, td
+		{
+			padding:10px;
+            width: 100px;
+		}
+	</style>
+	<title>Web Technology Homework 4 - USC ID: 6473476393</title>
+
+	<script type="text/javascript">
+		function loadXML() 
+		{
+			var xmlRequest;
+			var url = document.getElementById("url").value;
+			if (url == null || url == "") {
+				alert("Enter a valid XML path");
+				return false;
+			}
+
+		    if (window.XMLHttpRequest) {
+		    	xmlRequest = new XMLHttpRequest();
+		    }
+    		else if (window.ActiveXObject) {
+    			xmlRequest = new ActiveXObject("Microsoft.XMLHTTP");
+    		}
+
+    		if (fileExists(url, xmlRequest))
+    		{
+    			parseXML(url, xmlRequest);
+    		}
+    		else
+    		{
+    			alert("No file found at the location specified: " + url);
+    			return false;
+    		}
+    	}
+
+    	function fileExists (url, http)
+    	{
+    		try
+    		{
+    			http.open('HEAD', url, false);
+    			http.send();
+    		}
+    		catch(err)
+    		{
+    			return false;
+    		}
+    		return http.status != 404;
+    	}
+
+    	function parseXML(url, http) 
+    	{
+    		var parser, xmlDoc;
+    		parser = new DOMParser();
+    		http.open('GET', url, false);
+    		http.send();
+			parser = new DOMParser();
+			xmlDoc = http.responseXML;
+			var invalidParserString = parser.parseFromString('<', 'text/xml').getElementsByTagName("parsererror")[0].namespaceURI;
+    		if(!xmlDoc || xmlDoc.getElementsByTagNameNS(invalidParserString, 'parsererror').length > 0) {
+    			alert ("Error in XML file");
+    			return false;
+    		}
+
+    		var htmlDoc = "<html> <style> body{text-align:center; margin:auto;} </style> <body>";
+    		var i, j;
+    		var columnName = ['Slot', 'Newspaper', 'Location', 'HomePage', 'Logo'];
+    		htmlDoc+= "<table border=1 style=\"margin:auto;\">";
+
+    		var header = xmlDoc.getElementsByTagName("Header");
+    		var rows = xmlDoc.getElementsByTagName("Row");
+    		var columns = header[0].getElementsByTagName("Data");
+
+    		if(columns[0] == null || columns[0].length < 1)
+    		{
+    			alert ("Error in XML file");
+    			return false;
+    		}
+            else if(rows[0] == null || rows.length < 1)
+            {
+                alert ("There are no newspapers in that XML file");
+                return false;
+            }
+    		else
+    		{
+    			htmlDoc += "<tr>";
+    		}
+    		for(i = 0; i < columns.length; i++)
+    		{
+    			var data = columns[i].childNodes[0].nodeValue;
+    			if (data.match(/location/gi))
+    			{
+    				htmlDoc += "<th>" + "City / State" + "</th>";
+    			}
+    			else
+    			{
+    				htmlDoc += "<th>" + data + "</th>";
+    			}
+    			// columnName[i] = data;
+    			// if (data.match(/slot/gi))
+    			// {
+	    		// 	columnName[i] = "Slot";
+    			// }
+    			// else if (data.match(/state/gi))
+    			// {
+	    		// 	columnName[i] = "Location";
+    			// }
+
+    		}
+    		htmlDoc += "</tr>";
+
+    		for (i = 0; i < rows.length; i++)
+    		{
+    			htmlDoc += "<tr>";
+    			for (j = 0; j < columns.length; j++)
+    			{
+    				var cname = columnName[j];
+
+		    		if(rows[i] == null || rows[i].getElementsByTagName(cname) == null || rows[i].getElementsByTagName(cname).length < 1)
+		    		{
+		    			alert ("Error in XML file");
+		    			return false;
+		    		}
+
+    				var data;
+    				if (rows[i].getElementsByTagName(cname)[0].childNodes[0] && rows[i].getElementsByTagName(cname)[0].childNodes[0].nodeValue.trim())
+    				{
+    					data = rows[i].getElementsByTagName(cname)[0].childNodes[0].nodeValue;
+    				}
+    				else
+    				{
+    					data = "N/A";
+    				}
+
+    				htmlDoc += "<td>";
+    				if(cname.match(/homepage/gi))
+    				{
+    					if (data == "N/A")
+    					{
+    						htmlDoc += data;
+    					}
+    					else 
+    					{
+    						htmlDoc += "<a href=\"" + data + "\" target=_blank>" + data + "</a>";   
+    					}
+    				}
+    				else if(cname.match(/logo/gi) || cname.match(/image/gi))
+    				{
+    					if (data == "N/A")
+    					{
+    						htmlDoc += data;
+    					}
+    					else 
+    					{
+    						htmlDoc += "<img src=\"" + data + "\"/>";    					
+    					}
+    				}
+    				else if(cname.match(/location/gi))
+    				{
+    					var city;
+    					if (rows[i].getElementsByTagName(cname)[0].getElementsByTagName("City")[0].childNodes[0] && rows[i].getElementsByTagName(cname)[0].getElementsByTagName("City")[0].childNodes[0].nodeValue.trim())
+    					{
+    						city = rows[i].getElementsByTagName(cname)[0].getElementsByTagName("City")[0].childNodes[0].nodeValue;
+    					}
+    					else
+    					{
+    						city = "N/A";
+    					}
+
+    					var state;
+    					if (rows[i].getElementsByTagName(cname)[0].getElementsByTagName("State")[0].childNodes[0] && rows[i].getElementsByTagName(cname)[0].getElementsByTagName("State")[0].childNodes[0].nodeValue.trim())
+    					{
+    						state = rows[i].getElementsByTagName(cname)[0].getElementsByTagName("State")[0].childNodes[0].nodeValue;
+    					}
+    					else
+    					{
+    						state = "N/A";
+    					}
+    					htmlDoc += "<ul> <li>" + city + "</li> <li>" + state + "</li></ul>";   
+    				}
+    				else
+    				{
+    					htmlDoc += data;
+    				}
+    				htmlDoc +="</td>";
+    			}
+    			htmlDoc += "</tr>";
+    		}
+
+    		htmlDoc+= "</table>";
+
+    		htmlDoc += "</body> </html>";
+
+    		var popup = window.open(document.getElementById("url").value, "Parsed XML", "width=1000, height=500, scrollbars=yes");
+    		popup.document.write(htmlDoc);
+
+    	}
+    </script>
+</head>
+<body style="text-align:center; ">
+	<div>
+		<form id="form1" action="#" onsubmit="javascript:loadXML();">
+			<h2> Enter URL for Newspaper List XML File</h2>
+			<input id="url" type="textbox" size="30"/>
+			<br/><br/>
+			<input class="submit" type="submit" value="Submit Query"/>
+		</form>
+	</div>
+</body>
+
+
+</html>
